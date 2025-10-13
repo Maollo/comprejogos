@@ -1,0 +1,14 @@
+services:
+  bd:
+    image: mysql
+    container_name: db_comprejogos
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - comprejogos_data:/var/lib/comprejogos
+
+
+volumes:
+  comprejogos_data:
