@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import maollo.comprejogos.domain.UserCompreJogos;
 import maollo.comprejogos.repository.UserCompreJogosRepository;
 import maollo.comprejogos.service.UserCompreJogosService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -14,6 +15,7 @@ import java.util.Optional;
 public class UserCompreJogosServiceImpl implements UserCompreJogosService {
 
     private final UserCompreJogosRepository userRepository;
+    private final PasswordEncoder passwordEncoder; // Adicione esta linha
 
     @Override
     public Optional<UserCompreJogos> findById(Long id) {
@@ -32,7 +34,7 @@ public class UserCompreJogosServiceImpl implements UserCompreJogosService {
         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
             throw new IllegalStateException("Email já está em uso.");
         }
-//         user.setPassword(passwordEncoder.encode(user.getPassword()));
+         user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepository.save(user);
     }
 

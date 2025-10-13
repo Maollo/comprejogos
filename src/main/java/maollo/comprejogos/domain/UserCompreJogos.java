@@ -1,23 +1,33 @@
 package maollo.comprejogos.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
 @Entity
 @Table(name = "users") // Mapeando para a tabela 'usuarios' com nome em inglês
-public class UserCompreJogos {
+public class UserCompreJogos implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
+
+    private String name;
 
     @Column(length = 50, nullable = false, unique = true)
     private String login;
@@ -26,7 +36,9 @@ public class UserCompreJogos {
     private String email;
 
     private boolean emailVerified = false;
+
     private LocalDateTime emailVerifiedAt;
+
     private boolean newsletterSubscribed = true;
 
     @Column(length = 255, nullable = false)
@@ -75,4 +87,39 @@ public class UserCompreJogos {
     @UpdateTimestamp
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    @JsonIgnore
+    private String authorities;
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return (Arrays.stream(authorities.split(","))
+                .map(SimpleGrantedAuthority::new))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public String getUsername() {
+        return this.name;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return UserDetails.super.isAccountNonExpired();
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return UserDetails.super.isAccountNonLocked();
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return UserDetails.super.isCredentialsNonExpired();
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return UserDetails.super.isEnabled();
+    }
 }

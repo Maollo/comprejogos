@@ -12,6 +12,7 @@ public interface UserCompreJogosRepository extends JpaRepository<UserCompreJogos
 
 
         Optional<UserCompreJogos> findByLogin(String login);
+        Optional<UserCompreJogos> findByName(String name);
 
         Optional<UserCompreJogos> findByEmail(String email);
 
