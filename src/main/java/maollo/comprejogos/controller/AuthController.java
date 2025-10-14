@@ -1,5 +1,6 @@
 package maollo.comprejogos.controller;
 
+import jakarta.validation.Valid;
 import maollo.comprejogos.dto.AuthRequestDTO;
 import maollo.comprejogos.dto.AuthResponseDTO;
 import maollo.comprejogos.service.JwtService;
@@ -25,7 +26,7 @@ public class AuthController {
     private JwtService jwtService;
 
     @PostMapping("/login")
-    public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthRequestDTO authRequest) throws Exception {
+    public ResponseEntity<?> createAuthenticationToken(@Valid @RequestBody AuthRequestDTO authRequest) throws Exception {
         // Autentica o usuário
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(authRequest.getEmail(), authRequest.getPassword())

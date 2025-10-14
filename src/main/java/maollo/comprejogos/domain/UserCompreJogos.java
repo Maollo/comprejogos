@@ -2,6 +2,7 @@ package maollo.comprejogos.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 
 @Data
 @Entity
+@Builder
 @Table(name = "users") // Mapeando para a tabela 'usuarios' com nome em inglês
 public class UserCompreJogos implements UserDetails {
 

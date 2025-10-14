@@ -1,7 +1,9 @@
 package maollo.comprejogos.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import maollo.comprejogos.domain.UserCompreJogos;
+import maollo.comprejogos.dto.UserRegisterDTO;
 import maollo.comprejogos.service.UserCompreJogosService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,14 +25,10 @@ public class UserController {
      * @return O usuário criado com status 201 (Created) ou uma mensagem de erro com status 400 (Bad Request).
      */
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestBody UserCompreJogos user) {
-        try {
+    public ResponseEntity<?> registerUser(@Valid @RequestBody UserCompreJogos user) {
             UserCompreJogos registeredUser = userService.registerUser(user);
             return new ResponseEntity<>(registeredUser, HttpStatus.CREATED);
-        } catch (IllegalStateException e) {
-            // Captura a exceção que lançamos no service se o login ou email já existirem
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+
     }
 
     /**
