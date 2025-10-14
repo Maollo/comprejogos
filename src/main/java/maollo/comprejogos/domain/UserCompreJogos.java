@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Data;
+import maollo.comprejogos.utils.ERole;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.security.core.GrantedAuthority;
@@ -14,9 +15,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Data
@@ -88,19 +87,23 @@ public class UserCompreJogos implements UserDetails {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    @JsonIgnore
-    private String authorities;
+
+    @ManyToMany(fetch = FetchType.EAGER) // EAGER para carregar as roles junto com o usuário
+    @JoinTable(name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id"))
+    private Set<Role> roles = new HashSet<>();
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return (Arrays.stream(authorities.split(","))
-                .map(SimpleGrantedAuthority::new))
+        return this.roles.stream()
+                .map(role -> new SimpleGrantedAuthority(role.getName().name()))
                 .collect(Collectors.toList());
     }
 
     @Override
     public String getUsername() {
-        return this.name;
+        return this.email;
     }
 
     @Override
