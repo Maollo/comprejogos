@@ -47,8 +47,6 @@ public class UserCompreJogos implements UserDetails {
     private String password;
 
     private boolean active = true;
-    private boolean isClient = false;
-    private boolean isAdmin = false;
 
     @Column(precision = 10, scale = 2)
     private BigDecimal balance = BigDecimal.ZERO;

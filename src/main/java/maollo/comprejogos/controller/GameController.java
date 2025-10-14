@@ -1,23 +1,24 @@
 package maollo.comprejogos.controller;
 
+import lombok.RequiredArgsConstructor;
 import maollo.comprejogos.domain.Game;
+import maollo.comprejogos.dto.GameResponseDTO;
+import maollo.comprejogos.mapper.GameMapper;
 import maollo.comprejogos.service.GameService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/games")
+@RequiredArgsConstructor
 public class GameController {
 
     private final GameService gameService;
-
-    @Autowired
-    public GameController(GameService gameService) {
-        this.gameService = gameService;
-    }
+    private final GameMapper gameMapper;
 
     /**
      * Endpoint para listar todos os jogos.
@@ -25,9 +26,10 @@ public class GameController {
      * @return Uma lista de todos os jogos com status 200 (OK).
      */
     @GetMapping
-    public ResponseEntity<List<Game>> getAllGames() {
+    public ResponseEntity<List<GameResponseDTO>> getAllGames() {
         List<Game> games = gameService.findAllGames();
-        return ResponseEntity.ok(games);
+        List<GameResponseDTO> list = games.stream().map(gameMapper::toGameResponseDTO).toList();
+        return ResponseEntity.ok(list);
     }
     
     /**
@@ -36,9 +38,10 @@ public class GameController {
      * @return Uma lista dos jogos em destaque com status 200 (OK).
      */
     @GetMapping("/featured")
-    public ResponseEntity<List<Game>> getFeaturedGames() {
+    public ResponseEntity<List<GameResponseDTO>> getFeaturedGames() {
         List<Game> featuredGames = gameService.findFeaturedGames();
-        return ResponseEntity.ok(featuredGames);
+        List<GameResponseDTO> list = featuredGames.stream().map(gameMapper::toGameResponseDTO).toList();
+        return ResponseEntity.ok(list);
     }
 
     /**
@@ -48,8 +51,9 @@ public class GameController {
      * @return O jogo encontrado com status 200 (OK) ou 404 (Not Found) se não existir.
      */
     @GetMapping("/{appId}")
-    public ResponseEntity<Game> getGameByAppId(@PathVariable Long appId) {
+    public ResponseEntity<GameResponseDTO> getGameByAppId(@PathVariable Long appId) {
         return gameService.findByAppId(appId)
+                .map(gameMapper::toGameResponseDTO)
                 .map(ResponseEntity::ok) // Forma abreviada de: .map(game -> ResponseEntity.ok(game))
                 .orElse(ResponseEntity.notFound().build());
     }
