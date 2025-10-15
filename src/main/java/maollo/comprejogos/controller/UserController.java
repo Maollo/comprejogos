@@ -5,9 +5,12 @@ import lombok.RequiredArgsConstructor;
 import maollo.comprejogos.domain.UserCompreJogos;
 import maollo.comprejogos.dto.UserRegisterDTO;
 import maollo.comprejogos.dto.UserResponseDTO;
+import maollo.comprejogos.dto.UserUpdateProfileDTO;
 import maollo.comprejogos.mapper.UserMapper;
 import maollo.comprejogos.service.UserCompreJogosService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -48,5 +51,32 @@ public class UserController {
                 .map(userMapper::toUserResponseDTO) // Se o usuário for encontrado, retorna 200 OK com o usuário no corpo
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build()); // Se não, retorna 404 Not Found
+    }
+    /**
+     * Endpoint para buscar os dados do usuário atualmente autenticado.
+     * @param userDetails Objeto injetado pelo Spring Security contendo os dados do principal (usuário logado).
+     * @return Os dados do usuário em um DTO de resposta.
+     */
+    @GetMapping("/me")
+    public ResponseEntity<UserResponseDTO> getCurrentUser(@AuthenticationPrincipal UserDetails userDetails) {
+        // userDetails.getUsername() retorna o email, pois foi o que definimos no nosso UserDetails
+        return userService.findByEmail(userDetails.getUsername())
+                .map(userMapper::toUserResponseDTO)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Endpoint para que o usuário autenticado atualize seu próprio perfil.
+     * @param userDetails O principal do usuário logado.
+     * @param profileDto Os dados a serem atualizados.
+     * @return Os dados atualizados do usuário.
+     */
+    @PutMapping("/me")
+    public ResponseEntity<UserResponseDTO> updateCurrentUser(@AuthenticationPrincipal UserDetails userDetails,
+                                                             @Valid @RequestBody UserUpdateProfileDTO profileDto) {
+        String userEmail = userDetails.getUsername();
+        UserResponseDTO updatedUser = userService.updateUserProfile(userEmail, profileDto);
+        return ResponseEntity.ok(updatedUser);
     }
 }
