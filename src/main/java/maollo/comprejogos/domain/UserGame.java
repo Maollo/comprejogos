@@ -1,41 +1,36 @@
 package maollo.comprejogos.domain;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Data
 @Entity
-@Table(name = "game_reviews", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"user_id", "game_appid"})
+@Table(name = "user_games", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"user_id", "game_appid"}) // Impede o usuário de ter o mesmo jogo duas vezes
 })
-public class GameReview {
+@Getter
+@Setter
+public class UserGame {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    @JsonBackReference
     private UserCompreJogos user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "game_appid", referencedColumnName = "appId", nullable = false)
-    @JsonBackReference
-
     private Game game;
 
-    @Column(nullable = false)
-    private int rating; // Nota (ex: 1 a 5)
-
-    @Lob
-    private String comment;
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal purchasePrice;
 
     @CreationTimestamp
     @Column(updatable = false)
-    private LocalDateTime reviewDate;
+    private LocalDateTime purchaseDate;
 }

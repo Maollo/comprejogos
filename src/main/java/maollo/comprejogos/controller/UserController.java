@@ -1,5 +1,6 @@
 package maollo.comprejogos.controller;
 
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import maollo.comprejogos.domain.UserCompreJogos;
@@ -9,17 +10,23 @@ import maollo.comprejogos.dto.UserUpdateProfileDTO;
 import maollo.comprejogos.mapper.UserMapper;
 import maollo.comprejogos.service.UserCompreJogosService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import maollo.comprejogos.dto.UserGameResponseDTO;
+import maollo.comprejogos.service.UserGameService;
+import org.springframework.web.bind.annotation.GetMapping;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/users") // Define o caminho base para todos os endpoints neste controller
 public class UserController {
 
+    private final UserGameService userGameService;
     private final UserCompreJogosService userService;
-    private final UserMapper userMapper; // Injetar o Mapper
+    private final UserMapper userMapper;
 
 
     /**
@@ -37,7 +44,16 @@ public class UserController {
         return userMapper.toUserResponseDTO(registeredUser);
 
     }
-
+    /**
+     * Endpoint para buscar a biblioteca de jogos ("Meus Jogos")
+     * do usuário autenticado.
+     */
+    @GetMapping("/me/games")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<UserGameResponseDTO>> getMyGames(@AuthenticationPrincipal UserDetails userDetails) {
+        List<UserGameResponseDTO> myGames = userGameService.findGamesByUser(userDetails.getUsername());
+        return ResponseEntity.ok(myGames);
+    }
     /**
      * Endpoint para buscar um usuário pelo seu ID.
      * HTTP GET para /api/users/{id}

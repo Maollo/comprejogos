@@ -1,8 +1,11 @@
 package maollo.comprejogos.service.impl;
 
+import lombok.RequiredArgsConstructor;
 import maollo.comprejogos.domain.*;
-import maollo.comprejogos.repository.GameRepository;
-import maollo.comprejogos.repository.OrderRepository;
+import maollo.comprejogos.dto.OrderResponseDTO;
+import maollo.comprejogos.exception.ResourceNotFoundException;
+import maollo.comprejogos.mapper.OrderMapper;
+import maollo.comprejogos.repository.*;
 import maollo.comprejogos.service.OrderService;
 import maollo.comprejogos.utils.OrderStatus;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,17 +17,68 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 @Service
 public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
     private final GameRepository gameRepository;
+    private final CartRepository cartRepository;
+    private final UserCompreJogosRepository userRepository;
+    private final UserGameRepository userGameRepository;
+    private final OrderMapper orderMapper;
 
-    @Autowired
-    public OrderServiceImpl(OrderRepository orderRepository, GameRepository gameRepository) {
-        this.orderRepository = orderRepository;
-        this.gameRepository = gameRepository;
+
+
+
+    @Override
+    @Transactional // Garante que tudo (criar pedido, criar UserGames, limpar carrinho) funcione ou nada seja salvo
+    public OrderResponseDTO checkout(String userEmail) {
+        UserCompreJogos user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado: " + userEmail));
+
+        Cart cart = cartRepository.findByUser(user)
+                .orElseThrow(() -> new ResourceNotFoundException("Carrinho não encontrado para o usuário: " + userEmail));
+
+        if (cart.getItems().isEmpty()) {
+            throw new IllegalStateException("O carrinho está vazio. Não é possível finalizar a compra.");
+        }
+
+        // 1. Criar o Pedido
+        Order order = new Order();
+        order.setUser(user);
+        order.setStatus(OrderStatus.APROVADO); // Simulando pagamento aprovado
+        order.setTotal(cart.getTotal());
+
+        List<OrderItem> orderItems = new ArrayList<>();
+        for (CartItem cartItem : cart.getItems()) {
+            OrderItem orderItem = new OrderItem();
+            orderItem.setOrder(order);
+            orderItem.setGame(cartItem.getGame());
+            orderItem.setQuantity(cartItem.getQuantity());
+            orderItem.setPrice(cartItem.getPrice());
+            orderItems.add(orderItem);
+
+            // 2. Adicionar Jogo à Biblioteca do Usuário
+            // Verifica se o usuário já possui o jogo (caso de re-compra, embora raro)
+            if (userGameRepository.findByUserAndGame(user, cartItem.getGame()).isEmpty()) {
+                UserGame userGame = new UserGame();
+                userGame.setUser(user);
+                userGame.setGame(cartItem.getGame());
+                userGame.setPurchasePrice(cartItem.getPrice());
+                userGameRepository.save(userGame);
+            }
+        }
+        order.setItems(orderItems);
+        Order savedOrder = orderRepository.save(order);
+
+        // 3. Limpar o Carrinho
+        cart.getItems().clear();
+        cartRepository.save(cart);
+
+        return orderMapper.toOrderResponseDTO(savedOrder);
     }
+
 
     @Override
     @Transactional // Garante que ou tudo funciona, ou nada é salvo no banco (atomicidade)
@@ -66,7 +120,12 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public List<Order> findOrdersByUser(UserCompreJogos user) {
-        return orderRepository.findByUser(user);
+    public List<OrderResponseDTO> findOrdersByUser(String userEmail) {
+        UserCompreJogos user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado: " + userEmail));
+
+        return orderRepository.findByUserOrderByCreatedAtDesc(user).stream()
+                .map(orderMapper::toOrderResponseDTO)
+                .collect(Collectors.toList());
     }
 }

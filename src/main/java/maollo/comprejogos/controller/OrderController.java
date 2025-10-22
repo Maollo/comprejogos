@@ -4,10 +4,14 @@ import lombok.RequiredArgsConstructor;
 import maollo.comprejogos.dto.OrderRequestDTO;
 import maollo.comprejogos.domain.Order;
 import maollo.comprejogos.domain.UserCompreJogos;
+import maollo.comprejogos.dto.OrderResponseDTO;
 import maollo.comprejogos.service.OrderService;
 import maollo.comprejogos.service.UserCompreJogosService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,6 +26,22 @@ public class OrderController {
     private final UserCompreJogosService userService;
 
 
+    @PostMapping("/checkout")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<OrderResponseDTO> checkout(@AuthenticationPrincipal UserDetails userDetails) {
+        OrderResponseDTO createdOrder = orderService.checkout(userDetails.getUsername());
+        return new ResponseEntity<>(createdOrder, HttpStatus.CREATED);
+    }
+
+    /**
+     * Endpoint para o usuário ver seu histórico de pedidos.
+     */
+    @GetMapping("/my-orders")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<OrderResponseDTO>> getMyOrders(@AuthenticationPrincipal UserDetails userDetails) {
+        List<OrderResponseDTO> orders = orderService.findOrdersByUser(userDetails.getUsername());
+        return ResponseEntity.ok(orders);
+    }
     /**
      * Endpoint para criar um novo pedido.
      * HTTP POST para /api/orders
@@ -58,7 +78,7 @@ public class OrderController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado.");
         }
 
-        List<Order> orders = orderService.findOrdersByUser(userOptional.get());
+        List<OrderResponseDTO> orders = orderService.findOrdersByUser(userOptional.get().getUsername());
         return ResponseEntity.ok(orders);
     }
 }

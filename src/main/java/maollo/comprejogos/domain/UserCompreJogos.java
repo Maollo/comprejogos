@@ -2,8 +2,10 @@ package maollo.comprejogos.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import maollo.comprejogos.utils.ERole;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -21,6 +23,8 @@ import java.util.stream.Collectors;
 @Data
 @Entity
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "users") // Mapeando para a tabela 'usuarios' com nome em inglês
 public class UserCompreJogos implements UserDetails {
 
@@ -43,6 +47,7 @@ public class UserCompreJogos implements UserDetails {
     private boolean newsletterSubscribed = true;
 
     @Column(length = 255, nullable = false)
+    @JsonIgnore
     private String password;
 
     private boolean active = true;
@@ -92,9 +97,12 @@ public class UserCompreJogos implements UserDetails {
     @JoinTable(name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id"))
+    @JsonIgnore
+
     private Set<Role> roles = new HashSet<>();
 
     @Override
+    @JsonIgnore
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return this.roles.stream()
                 .map(role -> new SimpleGrantedAuthority(role.getName().name()))
@@ -107,21 +115,25 @@ public class UserCompreJogos implements UserDetails {
     }
 
     @Override
+    @JsonIgnore
     public boolean isAccountNonExpired() {
         return UserDetails.super.isAccountNonExpired();
     }
 
     @Override
+    @JsonIgnore
     public boolean isAccountNonLocked() {
         return UserDetails.super.isAccountNonLocked();
     }
 
     @Override
+    @JsonIgnore
     public boolean isCredentialsNonExpired() {
         return UserDetails.super.isCredentialsNonExpired();
     }
 
     @Override
+    @JsonIgnore
     public boolean isEnabled() {
         return UserDetails.super.isEnabled();
     }
