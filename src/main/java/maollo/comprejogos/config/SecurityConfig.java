@@ -42,7 +42,9 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
                                 "/v3/api-docs",
-                                "/v3/api-docs/**").permitAll() // Endpoints públicos
+                                "/v3/api-docs/**",
+                                "/games/images/**",
+                                "/api/webhooks/**").permitAll() // Endpoints públicos
                         .requestMatchers(HttpMethod.GET, "/api/games/**").permitAll() // Permite ver os jogos sem login
                         .anyRequest().authenticated() // Todas as outras requisições exigem autenticação
                 )

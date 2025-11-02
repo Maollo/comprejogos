@@ -8,7 +8,10 @@ import maollo.comprejogos.exception.ResourceNotFoundException;
 import maollo.comprejogos.mapper.GameMapper;
 import maollo.comprejogos.repository.GameRepository;
 import maollo.comprejogos.service.GameService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,7 +24,19 @@ public class GameServiceImpl implements GameService {
     private final GameRepository gameRepository;
     private final GameMapper gameMapper; // Injetar o mapper
 
+    @Override
+    public Page<GameResponseDTO> findAvailableGames(String searchTerm, String tag, Pageable pageable) {
+        // Trata strings vazias como nulas para a query funcionar corretamente
+        String effectiveSearchTerm = StringUtils.hasText(searchTerm) ? searchTerm : null;
+        String effectiveTag = StringUtils.hasText(tag) ? tag : null;
 
+        Page<Game> gamePage = gameRepository.findGamesByCriteria(
+                effectiveSearchTerm,
+                effectiveTag,
+                pageable);
+
+        return gamePage.map(gameMapper::toGameResponseDTO);
+    }
 
     @Override
     public Optional<Game> findByAppId(Long appId) {
@@ -40,10 +55,10 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public List<GameResponseDTO> findAllGames() {
-        return gameRepository.findAll().stream()
-                .map(gameMapper::toGameResponseDTO)
-                .collect(Collectors.toList());
+    public Page<GameResponseDTO> findAllGames(Pageable pageable) {
+        Page<Game> all = gameRepository.findAll(pageable);
+        return all.map(gameMapper::toGameResponseDTO);
+
     }
 
     @Override
@@ -70,6 +85,7 @@ public class GameServiceImpl implements GameService {
     public void deleteGame(Long appId) {
         Game gameToDelete = gameRepository.findByAppId(appId)
                 .orElseThrow(() -> new ResourceNotFoundException("Jogo não encontrado com o AppId: " + appId));
+
         gameRepository.delete(gameToDelete);
     }
 

@@ -23,4 +23,7 @@ public class GameResponseDTO {
     private String trailerUrl;
     private String coverUrl;
     private String tags;
+    private String minimumRequirements;
+    private String recommendedRequirements;
+
 }

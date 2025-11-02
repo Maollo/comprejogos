@@ -37,4 +37,6 @@ public class CartController {
                                                                 @PathVariable Long gameAppId) {
         return ResponseEntity.ok(cartService.removeItemFromCart(userDetails.getUsername(), gameAppId));
     }
+
+
 }

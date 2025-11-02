@@ -14,7 +14,20 @@ public class GameMapper {
         dto.setAppId(game.getAppId());
         dto.setName(game.getName());
         dto.setPrice(game.getPrice());
-        // ... mapeie todos os outros campos de Game para GameResponseDTO
+        dto.setPromotionalPrice(game.getPromotionalPrice());
+        dto.setImageUrl(game.getImageUrl());
+        dto.setTrailerUrl(game.getTrailerUrl());
+        dto.setCoverUrl(game.getCoverUrl());
+        dto.setDeveloper(game.getDeveloper());
+        dto.setPublisher(game.getPublisher());
+        dto.setReleaseDate(game.getReleaseDate());
+
+        // CAMPOS IMPORTANTES PARA A PÁGINA DE DETALHES
+        dto.setDescription(game.getDescription());
+        dto.setMinimumRequirements(game.getMinimumRequirements());
+        dto.setRecommendedRequirements(game.getRecommendedRequirements());
+        dto.setTags(game.getTags());
+
         return dto;
     }
 
@@ -24,7 +37,14 @@ public class GameMapper {
         game.setAppId(dto.getAppId());
         game.setName(dto.getName());
         game.setPrice(dto.getPrice());
-        // ... mapeie todos os outros campos de GameRequestDTO para Game
+        game.setImageUrl(dto.getImageUrl());
+        game.setPromotionalPrice(dto.getPromotionalPrice());
+        game.setDeveloper(dto.getDeveloper());
+        game.setCoverUrl(dto.getCoverUrl());
+        game.setReleaseDate(dto.getReleaseDate());
+        game.setTags(dto.getTags());
+        game.setTrailerUrl(dto.getTrailerUrl());
+
         return game;
     }
 
@@ -32,6 +52,6 @@ public class GameMapper {
         if (dto == null || game == null) return;
         game.setName(dto.getName());
         game.setPrice(dto.getPrice());
-        // ... mapeie todos os outros campos, mas NÃO o appId ou id
+
     }
 }

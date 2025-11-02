@@ -1,10 +1,12 @@
 package maollo.comprejogos.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import maollo.comprejogos.dto.OrderRequestDTO;
 import maollo.comprejogos.domain.Order;
 import maollo.comprejogos.domain.UserCompreJogos;
 import maollo.comprejogos.dto.OrderResponseDTO;
+import maollo.comprejogos.dto.SimulatePaymentRequestDTO;
 import maollo.comprejogos.service.OrderService;
 import maollo.comprejogos.service.UserCompreJogosService;
 import org.springframework.http.HttpStatus;
@@ -13,6 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import maollo.comprejogos.dto.PaymentInitiationDTO;
 
 import java.util.List;
 import java.util.Optional;
@@ -28,9 +31,15 @@ public class OrderController {
 
     @PostMapping("/checkout")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<OrderResponseDTO> checkout(@AuthenticationPrincipal UserDetails userDetails) {
-        OrderResponseDTO createdOrder = orderService.checkout(userDetails.getUsername());
-        return new ResponseEntity<>(createdOrder, HttpStatus.CREATED);
+    public ResponseEntity<PaymentInitiationDTO> initiateCheckout( // 3. RETORNO MUDA PARA PaymentInitiationDTO
+                                                                  @AuthenticationPrincipal UserDetails userDetails,
+                                                                  @RequestParam String paymentMethod // 4. RECEBE O MÉTODO DE PAGAMENTO
+    ) {
+        // 5. CHAMA O NOVO MÉTODO DO SERVIÇO
+        PaymentInitiationDTO paymentInfo = orderService.initiateCheckout(userDetails.getUsername(), paymentMethod);
+
+        // Retorna 201 Created com os detalhes de iniciação do pagamento
+        return new ResponseEntity<>(paymentInfo, HttpStatus.CREATED);
     }
 
     /**
@@ -80,5 +89,13 @@ public class OrderController {
 
         List<OrderResponseDTO> orders = orderService.findOrdersByUser(userOptional.get().getUsername());
         return ResponseEntity.ok(orders);
+    }
+    @PostMapping("/checkout/simulate-success")
+    @PreAuthorize("isAuthenticated()") // Garante que só usuários logados podem simular
+    public ResponseEntity<Void> simulateCheckoutSuccess(
+            @Valid @RequestBody SimulatePaymentRequestDTO request
+    ) {
+        orderService.simulateSuccessfulPayment(request.getPaymentGatewayReference());
+        return ResponseEntity.ok().build(); // Retorna 200 OK
     }
 }
