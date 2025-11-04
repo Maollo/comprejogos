@@ -90,12 +90,5 @@ public class OrderController {
         List<OrderResponseDTO> orders = orderService.findOrdersByUser(userOptional.get().getUsername());
         return ResponseEntity.ok(orders);
     }
-    @PostMapping("/checkout/simulate-success")
-    @PreAuthorize("isAuthenticated()") // Garante que só usuários logados podem simular
-    public ResponseEntity<Void> simulateCheckoutSuccess(
-            @Valid @RequestBody SimulatePaymentRequestDTO request
-    ) {
-        orderService.simulateSuccessfulPayment(request.getPaymentGatewayReference());
-        return ResponseEntity.ok().build(); // Retorna 200 OK
-    }
+
 }

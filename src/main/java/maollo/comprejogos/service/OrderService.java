@@ -12,11 +12,10 @@ public interface OrderService {
     PaymentInitiationDTO initiateCheckout(String userEmail, String paymentMethod);
 
     // Novo método para lidar com a confirmação (será chamado pelo webhook)
-    void handlePaymentConfirmation(String paymentGatewayReference, String status);
+    void handlePaymentConfirmation(Long orderId, String status);
 
     Order createOrder(UserCompreJogos user, List<Long> gameAppIds) throws Exception;
 
     List<OrderResponseDTO> findOrdersByUser(String userEmail);
 
-    void simulateSuccessfulPayment(String paymentGatewayReference);
 }

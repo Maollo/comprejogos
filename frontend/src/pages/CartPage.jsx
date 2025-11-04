@@ -60,34 +60,24 @@ const [checkoutLoading, setCheckoutLoading] = useState(false); // 2. NOVO ESTADO
   const handleCheckout = async () => {
     setCheckoutLoading(true); // Inicia loading específico do botão
     try {
-      // 1. Inicia o checkout (cria pedido PENDENTE)
-      const initiateResponse = await api.post('/orders/checkout?paymentMethod=SIMULADO');
-      const paymentInfo = initiateResponse.data;
-      
-      toast.info(`Pedido ${paymentInfo.orderId} criado. Simulando pagamento...`);
+      // 1. Chama o endpoint de checkout (agora o real)
+            const response = await api.post('/orders/checkout?paymentMethod=MERCADO_PAGO');
+            const paymentInfo = response.data; // Este é o nosso PaymentInitiationDTO
 
-      // 2. Simula a confirmação do pagamento
-      await api.post('/orders/checkout/simulate-success', {
-        paymentGatewayReference: paymentInfo.paymentGatewayReference
-      });
+            toast.info(`Pedido ${paymentInfo.orderId} criado. Redirecionando para o pagamento...`);
 
-      toast.success('Compra finalizada com sucesso! Seu pedido foi aprovado.');
-      
-      // 3. Redireciona para a página de pedidos após um pequeno delay
-      setTimeout(() => {
-        navigate('/my-orders');
-      }, 2000); // Espera 2 segundos
+            // 2. **A MUDANÇA PRINCIPAL:** Redireciona o usuário para a página do Mercado Pago
+            // O campo 'paymentDetails' agora contém a URL 'init_point'
+            window.location.href = paymentInfo.paymentDetails;
 
     } catch (error) {
-      console.error("Erro durante o checkout simulado:", error);
-      // Exibe a mensagem de erro vinda do backend (ex: "Carrinho está vazio")
-      const errorMessage = error.response?.data?.error || 'Falha ao finalizar a compra.';
-      toast.error(errorMessage);
-    } finally {
-      setCheckoutLoading(false); // Para o loading do botão
-      // Poderia recarregar o carrinho aqui se não for redirecionar, mas vamos redirecionar
-      // fetchCart(); // Opcional
-    }
+            console.error("Erro ao iniciar checkout:", error);
+            const errorMessage = error.response?.data?.error || 'Falha ao iniciar a compra.';
+            toast.error(errorMessage);
+            setCheckoutLoading(false);
+          }
+          // Não precisamos do 'finally' aqui, pois o 'setCheckoutLoading(false)' só é necessário em caso de erro.
+          // Se for bem-sucedido, o usuário será redirecionado.
   };
 
   if (loading) {
@@ -159,9 +149,9 @@ const [checkoutLoading, setCheckoutLoading] = useState(false); // 2. NOVO ESTADO
           color="success" 
           size="large"
           startIcon={<ShoppingCartCheckoutIcon />}
-          onClick={handleCheckout} // 4. CHAMA A NOVA FUNÇÃO
-          disabled={!cart || cart.items.length === 0 || checkoutLoading} // 5. DESABILITA SE VAZIO OU DURANTE LOADING
-        >
+          onClick={handleCheckout} // A função agora redireciona
+                    disabled={!cart || cart.items.length === 0 || checkoutLoading}
+                  >
           {checkoutLoading ? 'Processando...' : 'Finalizar Compra'}
         </Button>
       </Box>

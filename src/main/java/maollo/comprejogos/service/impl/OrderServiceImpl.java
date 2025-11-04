@@ -1,5 +1,6 @@
 package maollo.comprejogos.service.impl;
 
+import com.mercadopago.resources.preference.Preference;
 import lombok.RequiredArgsConstructor;
 import maollo.comprejogos.domain.*;
 import maollo.comprejogos.dto.OrderResponseDTO;
@@ -15,6 +16,9 @@ import maollo.comprejogos.dto.PaymentInitiationDTO; // Importe o DTO
 import java.time.LocalDateTime; // Importe LocalDateTime
 import org.slf4j.Logger; // Importe Logger
 import org.slf4j.LoggerFactory;
+import com.mercadopago.client.preference.*;
+import com.mercadopago.exceptions.MPException;
+import com.mercadopago.exceptions.MPApiException;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -65,46 +69,78 @@ public class OrderServiceImpl implements OrderService {
         }
         order.setItems(orderItems);
 
-        // *** AQUI ENTRARIA A CHAMADA PARA A API DO GATEWAY DE PAGAMENTO ***
-        // Exemplo conceitual (você substituirá isso pela API real):
-        // PaymentGatewayResponse gatewayResponse = paymentGatewayClient.createPayment(order.getTotal(), paymentMethod, order.getId());
-        // String gatewayReference = gatewayResponse.getReferenceId();
-        // String paymentLink = gatewayResponse.getPaymentUrl();
-
-        // Simulando a resposta do gateway:
-        String gatewayReference = "MOCK_PAYMENT_REF_" + System.currentTimeMillis(); // Gere um ID único
-        String paymentLink = "https://mock-payment-gateway.com/pay/" + gatewayReference; // Link simulado
-
-        // Atualiza o pedido com os detalhes do gateway
-        order.setPaymentGatewayReference(gatewayReference);
-        order.setPaymentDetails(paymentLink); // Ou QR Code data, etc.
 
         Order savedOrder = orderRepository.save(order);
-        logger.info("Pedido {} criado com status PENDENTE para usuário {}. Ref Gateway: {}",
-                savedOrder.getId(), userEmail, gatewayReference);
+        logger.info("Pedido {} criado com status PENDENTE para usuário {}. Ref Gateway: ",
+                savedOrder.getId(), userEmail );
 
-        // !! NÃO ADICIONA À BIBLIOTECA E NÃO LIMPA O CARRINHO AINDA !!
+        try {
+            // 2. CHAMA A API DO MERCADO PAGO
+            PreferenceClient client = new PreferenceClient();
 
-        // Retorna os detalhes para o frontend iniciar o pagamento
-        return new PaymentInitiationDTO(
-                savedOrder.getId(),
-                savedOrder.getPaymentGatewayReference(),
-                savedOrder.getPaymentMethod(),
-                savedOrder.getPaymentDetails()
-        );
+            // Lista de itens para o Mercado Pago
+            List<PreferenceItemRequest> items = new ArrayList<>();
+            for (OrderItem item : savedOrder.getItems()) {
+                items.add(
+                        PreferenceItemRequest.builder()
+                                .id(item.getGame().getAppId().toString())
+                                .title(item.getGame().getName())
+                                .quantity(item.getQuantity())
+                                .unitPrice(item.getPrice())
+                                .build()
+                );
+            }
+
+            PreferenceBackUrlsRequest backUrls = PreferenceBackUrlsRequest.builder()
+                    .success("http://localhost:5173/my-orders") // URL do seu frontend para sucesso
+                    .failure("http://localhost:5173/cart")      // URL do seu frontend para falha
+                    .pending("http://localhost:5173/my-orders") // URL para boleto/pendente
+                    .build();
+
+            String webhookUrl = "https://hominine-unnominalistic-priscilla.ngrok-free.dev/api/webhooks/mercado-pago/payment";
+        // Atualiza o pedido com os detalhes do gateway
+            PreferenceRequest request = PreferenceRequest.builder()
+                    .items(items)
+                    .externalReference(savedOrder.getId().toString()) // ID do NOSSO pedido
+                    .backUrls(backUrls)
+                    .notificationUrl(webhookUrl) // Envia notificação para este endpoint
+                    .build();
+            Preference preference = client.create(request);
+
+            // 3. Atualiza nosso pedido com os dados do MP
+            savedOrder.setPaymentGatewayReference(preference.getId()); // ID da Preferência
+            savedOrder.setPaymentDetails(preference.getInitPoint()); // URL de pagamento
+            orderRepository.save(savedOrder); // Ou QR Code data, etc.
+
+
+            logger.info("Preferência de pagamento {} criada para Pedido {}", preference.getId(), savedOrder.getId());
+
+            // 4. Retorna os detalhes para o frontend
+            return new PaymentInitiationDTO(
+                    savedOrder.getId(),
+                    preference.getId(),
+                    savedOrder.getPaymentMethod(),
+                    preference.getInitPoint() // A URL de pagamento
+            );
+
+        } catch (MPApiException e) {
+            logger.error("Erro da API do Mercado Pago: {}", e.getApiResponse().getContent(), e);
+            throw new RuntimeException("Falha ao criar preferência de pagamento (API).", e);
+        } catch (MPException e) {
+            logger.error("Erro no SDK do Mercado Pago: {}", e.getMessage(), e);
+            throw new RuntimeException("Falha ao criar preferência de pagamento (SDK).", e);
+        }
     }
 
     @Override
     @Transactional // ESSENCIAL que esta operação seja atômica
-    public void handlePaymentConfirmation(String paymentGatewayReference, String gatewayStatus) {
-        logger.info("Recebida notificação do gateway. Referência: {}, Status: {}", paymentGatewayReference, gatewayStatus);
+    public void handlePaymentConfirmation(Long orderId, String gatewayStatus) {
 
         // Busca o pedido pela referência ÚNICA do gateway
-        Optional<Order> orderOpt = orderRepository.findByPaymentGatewayReference(paymentGatewayReference); // PRECISA CRIAR ESTE MÉTODO NO REPOSITORY
+        Optional<Order> orderOpt = orderRepository.findById(orderId); // PRECISA CRIAR ESTE MÉTODO NO REPOSITORY
 
         if (orderOpt.isEmpty()) {
-            logger.error("ERRO: Pedido não encontrado para a referência do gateway: {}", paymentGatewayReference);
-            // Poderia lançar uma exceção ou apenas retornar
+            logger.info("hehe");
             return;
         }
 
@@ -207,11 +243,5 @@ public class OrderServiceImpl implements OrderService {
                 .collect(Collectors.toList());
     }
 
-    @Override
-    public void simulateSuccessfulPayment(String paymentGatewayReference) {
-        logger.info("SIMULAÇÃO: Iniciando confirmação de pagamento para referência {}", paymentGatewayReference);
-        // Chama a mesma lógica que o webhook usaria
-        handlePaymentConfirmation(paymentGatewayReference, "APROVADO");
-        logger.info("SIMULAÇÃO: Confirmação de pagamento concluída para referência {}", paymentGatewayReference);
-    }
+
 }

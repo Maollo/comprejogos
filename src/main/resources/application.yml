@@ -11,3 +11,6 @@ spring:
 jwt:
   secret:
     key: suaChaveSecretaSuperSeguraQueDeveSerLongaEComplexaAgoraVemDoProperties
+
+mercadopago:
+  access_token: APP_USR-7644374132617600-110216-5939b48c4bbb4d42c82f3f7c33de43b2-2959448439
