@@ -1,14 +1,13 @@
 # Estágio 1: Build (Construção)
 # Usamos uma imagem Maven com Java 17 para compilar nosso projeto
-FROM maven:3.9.6-eclipse-temurin-17-jammy AS build
+# ESTA É A LINHA CORRIGIDA:
+FROM maven:3.9-eclipse-temurin-17 AS build
 
 # Define o diretório de trabalho dentro do container
 WORKDIR /app
 
 # Copia o pom.xml primeiro para aproveitar o cache do Docker
 COPY pom.xml .
-# (Opcional) Descomente se você tiver um .mvn wrapper
-# COPY .mvn .mvn
 
 # Copia todo o código-fonte
 COPY src ./src
@@ -21,6 +20,7 @@ RUN mvn clean package -DskipTests
 
 # Estágio 2: Run (Execução)
 # Usamos uma imagem JRE (Java Runtime) leve, que é menor e mais segura
+# Esta imagem (a segunda) já estava correta
 FROM eclipse-temurin:17-jre-jammy
 
 # Define o diretório de trabalho
