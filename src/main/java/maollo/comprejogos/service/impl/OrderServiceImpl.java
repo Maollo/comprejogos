@@ -92,12 +92,12 @@ public class OrderServiceImpl implements OrderService {
             }
 
             PreferenceBackUrlsRequest backUrls = PreferenceBackUrlsRequest.builder()
-                    .success("http://localhost:5173/my-orders") // URL do seu frontend para sucesso
-                    .failure("http://localhost:5173/cart")      // URL do seu frontend para falha
-                    .pending("http://localhost:5173/my-orders") // URL para boleto/pendente
+                    .success("https://comprejogos.vercel.app/my-orders") // URL de produção
+                    .failure("https://comprejogos.vercel.app/cart")      // URL de produção
+                    .pending("https://comprejogos.vercel.app/my-orders") // URL de produção
                     .build();
 
-            String webhookUrl = "https://hominine-unnominalistic-priscilla.ngrok-free.dev/api/webhooks/mercado-pago/payment";
+            String webhookUrl = "https://comprejogos-api.onrender.com/api/webhooks/mercado-pago/payment";
         // Atualiza o pedido com os detalhes do gateway
             PreferenceRequest request = PreferenceRequest.builder()
                     .items(items)
