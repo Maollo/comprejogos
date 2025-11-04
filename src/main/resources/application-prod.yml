@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+jwt:
+  secret:
+    key: suaChaveSecretaSuperSeguraQueDeveSerLongaEComplexaAgoraVemDoProperties
+
+mercadopago:
+  access_token: APP_USR-7644374132617600-110216-5939b48c4bbb4d42c82f3f7c33de43b2-2959448439
