@@ -1,0 +1,16 @@
+# Configuração de Desenvolvimento (Modelo)
+# Copie este arquivo para 'application-dev.properties' (que está no .gitignore)
+# e preencha com suas chaves locais.
+
+# --- Banco Local (Ex: Docker MySQL/Postgres) ---
+spring.datasource.url=jdbc:mysql://localhost:3306/comprejogos_db
+spring.datasource.username=root
+spring.datasource.password=sua_senha_local_aqui
+
+# Dialeto do banco local
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect
+
+# --- Chaves Secretas (NÃO COLOQUE VALORES REAIS AQUI) ---
+jwt.secret.key=SUA_CHAVE_SECRETA_JWT_PARA_DEV_AQUI
+mercadopago.access_token=SEU_TOKEN_DE_TESTE_DO_MERCADO_PAGO_AQUI

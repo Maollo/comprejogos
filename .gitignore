@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Ignora arquivos de propriedades de ambiente local
+/src/main/resources/application-dev.yml
